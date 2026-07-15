@@ -87,40 +87,58 @@ export default function Navbar() {
         </button>
       </div>
 
-      {/* Mobile menu */}
+      {/* Mobile menu — fullscreen overlay */}
       <AnimatePresence>
         {menuOpen && (
           <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="md:hidden overflow-hidden"
-            style={{ background: "rgba(0,36,54,0.98)", backdropFilter: "blur(10px)" }}
+            initial={{ opacity: 0, x: "100%" }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: "100%" }}
+            transition={{ duration: 0.35, ease: "easeInOut" }}
+            className="md:hidden fixed inset-0 z-40 flex flex-col"
+            style={{ background: "rgba(0,22,38,0.98)", backdropFilter: "blur(16px)" }}
           >
-            <ul className="px-6 py-4 space-y-4">
-              {links.map((l) => (
-                <li key={l.label}>
-                  <a
-                    href={l.href}
-                    onClick={() => setMenuOpen(false)}
-                    className="block font-semibold text-base transition-colors"
-                    style={{ color: "rgba(255,255,255,0.9)" }}
-                  >
-                    {l.label}
-                  </a>
-                </li>
-              ))}
-              <li>
-                <a
-                  href="#produtos"
+            {/* Close button */}
+            <div className="flex items-center justify-between px-6 py-4">
+              <KelkaLogo className="h-9" variant="light" />
+              <button
+                onClick={() => setMenuOpen(false)}
+                className="text-white/60 hover:text-white transition-colors p-2"
+                aria-label="Fechar menu"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-7 h-7">
+                  <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Links */}
+            <nav className="flex-1 flex flex-col items-center justify-center gap-2 px-6">
+              {links.map((l, i) => (
+                <motion.a
+                  key={l.label}
+                  href={l.href}
                   onClick={() => setMenuOpen(false)}
-                  className="block shimmer-btn text-white font-bold text-center py-3 rounded-full mt-2"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 + i * 0.07 }}
+                  className="w-full text-center py-4 text-2xl font-black text-white/80 hover:text-white border-b border-white/10 transition-colors"
                 >
-                  Comprar Agora 🐾
-                </a>
-              </li>
-            </ul>
+                  {l.label}
+                </motion.a>
+              ))}
+
+              <motion.a
+                href="#produtos"
+                onClick={() => setMenuOpen(false)}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 + links.length * 0.07 }}
+                className="shimmer-btn text-white font-black text-lg px-10 py-4 rounded-2xl mt-8 w-full text-center"
+              >
+                Comprar Agora 🐾
+              </motion.a>
+            </nav>
           </motion.div>
         )}
       </AnimatePresence>

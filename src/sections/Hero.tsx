@@ -51,28 +51,39 @@ export default function Hero() {
       id="hero"
       className="relative min-h-screen flex flex-col overflow-hidden"
     >
-      {/* Background image */}
+      {/* Background image — desktop */}
       <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: "url(/lp-kelka/hero-banner.png)" }}
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat hidden sm:block"
+        style={{ backgroundImage: "url(/lp-kelka/hero-banner.webp)" }}
+      />
+      {/* Background image — mobile */}
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat block sm:hidden"
+        style={{ backgroundImage: "url(/lp-kelka/banner-mobile.webp)" }}
       />
 
-      {/* Left text overlay — dark gradient só na metade esquerda */}
+      {/* Overlay — mobile: escurece de baixo pra cima / desktop: esquerda pra direita */}
       <div
-        className="absolute inset-0"
+        className="absolute inset-0 block sm:hidden"
+        style={{
+          background: "linear-gradient(to top, rgba(0,20,35,0.95) 0%, rgba(0,28,45,0.75) 45%, rgba(0,28,45,0.2) 75%, transparent 100%)",
+        }}
+      />
+      <div
+        className="absolute inset-0 hidden sm:block"
         style={{
           background: "linear-gradient(to right, rgba(0,28,45,0.88) 0%, rgba(0,40,60,0.72) 45%, rgba(0,40,60,0.1) 65%, transparent 100%)",
         }}
       />
 
       {/* Main content */}
-      <div className="relative z-10 flex-1 flex items-center px-6 pt-28 pb-16 max-w-7xl mx-auto w-full">
-        <div className="max-w-xl">
+      <div className="relative z-10 flex-1 flex items-end sm:items-center px-6 pt-28 pb-32 sm:pb-16 max-w-7xl mx-auto w-full">
+        <div className="w-full sm:max-w-xl">
 
           {/* Title */}
-          <div className="relative mb-6">
-            <h1 className="font-black leading-tight text-white">
-              <span className="hero-title-line block text-5xl sm:text-6xl lg:text-7xl">
+          <div className="relative mb-4 sm:mb-6">
+            <h1 className="font-black leading-tight text-white text-center sm:text-left">
+              <span className="hero-title-line block text-4xl sm:text-6xl lg:text-7xl">
                 Seu Pet{" "}
                 <span style={{
                   background: "linear-gradient(135deg, #5CCDA7 0%, #00A2D6 100%)",
@@ -83,7 +94,7 @@ export default function Hero() {
                   Merece
                 </span>
               </span>
-              <span className="hero-title-line block text-5xl sm:text-6xl lg:text-7xl">
+              <span className="hero-title-line block text-4xl sm:text-6xl lg:text-7xl">
                 o Melhor
               </span>
             </h1>
@@ -111,8 +122,8 @@ export default function Hero() {
 
           {/* Subtitle */}
           <p
-            className="hero-subtitle text-lg sm:text-xl mb-10 leading-relaxed"
-            style={{ color: "rgba(255,255,255,0.75)" }}
+            className="hero-subtitle text-base sm:text-xl mb-8 sm:mb-10 leading-relaxed text-center sm:text-left"
+            style={{ color: "rgba(255,255,255,0.80)" }}
           >
             Tapetes higiênicos{" "}
             <strong style={{ color: "#5CCDA7" }}>ultra absorventes</strong>,
@@ -120,7 +131,7 @@ export default function Hero() {
           </p>
 
           {/* CTA Button */}
-          <div className="flex items-start">
+          <div className="flex items-center justify-center sm:justify-start">
             <a
               href="#produtos"
               className="hero-cta shimmer-btn text-white font-black text-lg px-10 py-4 rounded-2xl flex items-center gap-3"
