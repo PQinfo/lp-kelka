@@ -62,7 +62,7 @@ export const products: Product[] = [
     badgeColor: "#c0392b",
     desc: "Para filhotes e adultos. Com atrativo canino, fita aderente e superabsorvente. Sem vazamentos.",
     features: ["Com atrativo canino", "Fita aderente", "Superabsorvente", "Sem vazamentos"],
-    img: "/lp-kelka/produtos/xixicao-7un.webp",
+    img: "/produtos/xixicao-7un.webp",
     imgBg: "#6b2d2d",
   },
   {
@@ -74,7 +74,7 @@ export const products: Product[] = [
     badgeColor: "#c0392b",
     desc: "Pacotão para filhotes e adultos. Mesma qualidade em quantidade maior para economizar mais.",
     features: ["Com atrativo canino", "Fita aderente", "Superabsorvente", "Sem vazamentos"],
-    img: "/lp-kelka/produtos/xixicao-30un.webp",
+    img: "/produtos/xixicao-30un.webp",
     imgBg: "#6b2d2d",
   },
   {
@@ -86,7 +86,7 @@ export const products: Product[] = [
     badgeColor: "#1a5276",
     desc: "Para todas as idades e raças. Extra gel para máxima absorção. Ideal para casas e apartamentos.",
     features: ["Extra gel absorvente", "Com atrativo canino", "Fita aderente", "Todas as raças"],
-    img: "/lp-kelka/produtos/pipizao-7un.webp",
+    img: "/produtos/pipizao-7un.webp",
     imgBg: "#1a5276",
   },
   {
@@ -98,7 +98,7 @@ export const products: Product[] = [
     badgeColor: "#1a5276",
     desc: "Pacotão Premium para quem busca a melhor proteção com custo-benefício máximo.",
     features: ["Extra gel absorvente", "Com atrativo canino", "Fita aderente", "Todas as raças"],
-    img: "/lp-kelka/produtos/pipizao-30un.webp",
+    img: "/produtos/pipizao-30un.webp",
     imgBg: "#1a5276",
   },
   {
@@ -110,7 +110,7 @@ export const products: Product[] = [
     badgeColor: "#784212",
     desc: "Tapete compacto e superabsorvente para cães de pequeno e médio porte. Tecnologia anti-odor.",
     features: ["Superabsorvente", "Com atrativo canino", "Fita aderente", "Sem vazamentos"],
-    img: "/lp-kelka/produtos/fofuxao-7un.webp",
+    img: "/produtos/fofuxao-7un.webp",
     imgBg: "#784212",
   },
   {
@@ -122,7 +122,7 @@ export const products: Product[] = [
     badgeColor: "#1e8449",
     desc: "Pacotão Fofu Xão em tamanho maior. Para cães adultos de médio e grande porte.",
     features: ["Superabsorvente", "Com atrativo canino", "Fita aderente", "Sem vazamentos"],
-    img: "/lp-kelka/produtos/fofuxao-30un.webp",
+    img: "/produtos/fofuxao-30un.webp",
     imgBg: "#1e8449",
   },
 ];

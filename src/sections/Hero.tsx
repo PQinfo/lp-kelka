@@ -54,12 +54,12 @@ export default function Hero() {
       {/* Background image — desktop */}
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat hidden sm:block"
-        style={{ backgroundImage: "url(/lp-kelka/hero-banner.webp)" }}
+        style={{ backgroundImage: "url(/hero-banner.webp)" }}
       />
       {/* Background image — mobile */}
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat block sm:hidden"
-        style={{ backgroundImage: "url(/lp-kelka/banner-mobile.webp)" }}
+        style={{ backgroundImage: "url(/banner-mobile.webp)" }}
       />
 
       {/* Overlay — mobile: escurece de baixo pra cima / desktop: esquerda pra direita */}
