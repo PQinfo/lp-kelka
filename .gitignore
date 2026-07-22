@@ -24,3 +24,6 @@ dist-ssr
 
 # Windows metadata
 *:Zone.Identifier
+
+
+-old.htaccess

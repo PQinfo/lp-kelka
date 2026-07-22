@@ -3,7 +3,7 @@ DirectoryIndex dist/index.html
 
 <IfModule mod_rewrite.c>
   RewriteEngine On
-  RewriteBase /
+  RewriteBase /lp-kelka/
 
   # Serve compiled JS/CSS/assets from dist/assets/
   RewriteRule ^assets/(.+)$ dist/assets/$1 [L]
@@ -12,7 +12,7 @@ DirectoryIndex dist/index.html
   RewriteRule ^produtos/(.+)$ dist/produtos/$1 [L]
 
   # Serve any static file that exists in dist/ (imagens, svg, etc.)
-  RewriteCond %{DOCUMENT_ROOT}/dist/$1 -f
+  RewriteCond %{DOCUMENT_ROOT}/lp-kelka/dist/$1 -f
   RewriteRule ^([^/]+\.(png|jpg|jpeg|gif|webp|svg|ico|woff2?|ttf|eot))$ dist/$1 [L]
 
   # SPA fallback
