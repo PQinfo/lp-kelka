@@ -60,7 +60,7 @@ export default function Footer() {
           <div>
             <h4 className="font-black text-sm uppercase tracking-widest text-emerald-400 mb-4">Produtos</h4>
             <ul className="space-y-3">
-              {["Xixi Cão Classic", "Xixi Cão Premium", "Xixi Cão Mega Pack", "Xixi Cão Filhote", "Ver Catálogo"].map((l) => (
+              {["Pipizão", "Fofuxão", "Xixicão", "Terceirização de tapetes", "Ver Catálogo"].map((l) => (
                 <li key={l}>
                   <a href="#produtos" className="text-white/60 hover:text-emerald-400 text-sm transition-colors">{l}</a>
                 </li>
@@ -80,7 +80,7 @@ export default function Footer() {
 
             <h4 className="font-black text-sm uppercase tracking-widest text-emerald-400 mb-4 mt-8">Atendimento</h4>
             <ul className="space-y-2 text-white/60 text-sm">
-              <li>📞 0800 000 0000</li>
+              <li>📞 (48) 3524-8058</li>
               <li>📧 contato@kelka.com.br</li>
             </ul>
           </div>

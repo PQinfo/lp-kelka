@@ -2,6 +2,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Pagination, Autoplay } from "swiper/modules";
 import { motion } from "framer-motion";
 import { testimonials, type Testimonial } from "../data/content";
+import Partners from "./Partners";
 
 const StarRating = ({ count = 5 }: { count?: number }) => (
   <div className="flex gap-1">
@@ -43,11 +44,11 @@ const TestimonialCard = ({ t }: { t: Testimonial }) => (
 
 export default function Testimonials() {
   return (
-    <section id="depoimentos" className="py-24 px-6 bg-kelka-gradient-dark relative overflow-hidden">
+    <section id="depoimentos" className="pt-24 pb-0 bg-kelka-gradient-dark relative overflow-hidden">
       <div className="absolute inset-0 paw-pattern opacity-50 pointer-events-none" />
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-emerald-400/40 to-transparent" />
 
-      <div className="max-w-7xl mx-auto relative z-10">
+      <div className="max-w-7xl mx-auto px-6 relative z-10">
         {/* Header */}
         <div className="text-center mb-14">
           <motion.h2
@@ -56,8 +57,8 @@ export default function Testimonials() {
             viewport={{ once: true }}
             className="text-4xl sm:text-5xl font-black text-white leading-tight mb-4"
           >
-            X famílias{" "}
-            <span className="text-gradient">aprovam!</span>
+            Quem usa,{" "}
+            <span className="text-gradient">aprova!</span>
           </motion.h2>
 
           <motion.div
@@ -101,7 +102,7 @@ export default function Testimonials() {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="mt-10 flex flex-wrap justify-center gap-6"
+          className="mt-10 mb-10 flex flex-wrap justify-center gap-6"
         >
           {[
             { icon: "🔒", label: "Compra 100% Segura" },
@@ -115,6 +116,8 @@ export default function Testimonials() {
           ))}
         </motion.div>
       </div>
+
+      <Partners />
     </section>
   );
 }

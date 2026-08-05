@@ -54,12 +54,12 @@ export default function Hero() {
       {/* Background image — desktop */}
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat hidden sm:block"
-        style={{ backgroundImage: "url(/hero-banner.webp)" }}
+        style={{ backgroundImage: `url(${import.meta.env.BASE_URL}hero-banner.webp)` }}
       />
       {/* Background image — mobile */}
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat block sm:hidden"
-        style={{ backgroundImage: "url(/banner-mobile.webp)" }}
+        style={{ backgroundImage: `url(${import.meta.env.BASE_URL}banner-mobile.webp)` }}
       />
 
       {/* Overlay — mobile: escurece de baixo pra cima / desktop: esquerda pra direita */}
@@ -126,8 +126,8 @@ export default function Hero() {
             style={{ color: "rgba(255,255,255,0.80)" }}
           >
             Tapetes higiênicos{" "}
-            <strong style={{ color: "#5CCDA7" }}>ultra absorventes</strong>,
-            antibacterianos e biodegradáveis. Conforto e higiene para o seu melhor amigo.
+            <strong style={{ color: "#5CCDA7" }}>superabsorventes</strong>,
+            com mais proteção contra vazamentos, patas secas e casa mais limpa todos os dias.
           </p>
 
           {/* CTA Button */}

@@ -10,7 +10,7 @@ export default function KelkaLogo({ className = "h-9", variant = "light" }: Kelk
     <div className={`relative ${className}`} style={{ aspectRatio: "3000 / 757" }}>
       {/* White version */}
       <img
-        src="/logo-horizontal.webp"
+        src={`${import.meta.env.BASE_URL}logo-horizontal.webp`}
         alt="Kelka"
         className="absolute inset-0 w-full h-full object-contain"
         style={{
@@ -24,11 +24,11 @@ export default function KelkaLogo({ className = "h-9", variant = "light" }: Kelk
         className="absolute inset-0"
         style={{
           background: "linear-gradient(135deg, #5CCDA7 0%, #00A2D6 100%)",
-          WebkitMaskImage: "url('/logo-horizontal.webp')",
+          WebkitMaskImage: `url('${import.meta.env.BASE_URL}logo-horizontal.webp')`,
           WebkitMaskSize: "contain",
           WebkitMaskRepeat: "no-repeat",
           WebkitMaskPosition: "center",
-          maskImage: "url('/logo-horizontal.webp')",
+          maskImage: `url('${import.meta.env.BASE_URL}logo-horizontal.webp')`,
           maskSize: "contain",
           maskRepeat: "no-repeat",
           maskPosition: "center",

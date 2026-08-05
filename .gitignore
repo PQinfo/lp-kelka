@@ -25,5 +25,8 @@ dist-ssr
 # Windows metadata
 *:Zone.Identifier
 
+# Environment-specific — each server keeps its own
+.htaccess
+
 
 -old.htaccess

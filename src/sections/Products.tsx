@@ -65,7 +65,7 @@ const ProductCard = ({ p }: { p: Product }) => (
 
       {/* CTA */}
       <motion.a
-        href="https://wa.me/5500000000000"
+        href="https://wa.me/554835248058"
         target="_blank"
         rel="noopener noreferrer"
         whileHover={{ scale: 1.04 }}

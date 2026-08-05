@@ -4,9 +4,18 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  base: '/',
   build: {
     outDir: 'dist',
     emptyOutDir: true,
+    rolldownOptions: {
+      output: {
+        manualChunks(id: string) {
+          if (id.includes('gsap'))          return 'vendor-gsap';
+          if (id.includes('framer-motion')) return 'vendor-motion';
+          if (id.includes('swiper'))        return 'vendor-swiper';
+          if (id.includes('aos'))           return 'vendor-aos';
+        },
+      },
+    },
   },
 })

@@ -5,7 +5,6 @@ import Navbar from "./components/Navbar";
 import Hero from "./sections/Hero";
 import Benefits from "./sections/Benefits";
 import Products from "./sections/Products";
-import Partners from "./sections/Partners";
 import HowItWorks from "./sections/HowItWorks";
 import Testimonials from "./sections/Testimonials";
 import FAQ from "./sections/FAQ";
@@ -29,7 +28,6 @@ export default function App() {
         <Hero />
         <Benefits />
         <Products />
-        <Partners />
         <HowItWorks />
         <Testimonials />
         <FAQ />
@@ -44,7 +42,7 @@ export default function App() {
         <span className="absolute inset-0 rounded-full animate-ping" style={{ background: "rgba(37,211,102,0.2)", animationDelay: "0.4s" }} />
 
         <a
-          href="https://wa.me/5500000000000"
+          href="https://wa.me/554835248058"
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Fale pelo WhatsApp"
