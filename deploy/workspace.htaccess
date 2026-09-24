@@ -1,0 +1,16 @@
+# Development workspace on Apache: only files from the distribution are public.
+Options -Indexes -MultiViews
+DirectoryIndex dist/index.html
+ErrorDocument 404 "Página não encontrada."
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule ^$ dist/index.html [END]
+  RewriteRule ^(?:index\.html)?$ dist/index.html [END]
+  RewriteRule ^(assets/[A-Za-z0-9_.-]+|favicon\.png|logo-kelka\.png|og-kelka\.jpg|robots\.txt|sitemap\.xml|404\.html)$ dist/$1 [END]
+  RewriteRule ^ - [R=404,END]
+</IfModule>
+
+# Without rewriting, fail closed instead of exposing the source workspace.
+<IfModule !mod_rewrite.c>
+  Require all denied
+</IfModule>

@@ -30,3 +30,22 @@ dist-ssr
 
 
 -old.htaccess
+# Generated build/test artifacts
+.cache/
+playwright-report/
+test-results/
+# Derivados do pipeline de imagens: `npm run images` (e o build) recriam os
+# dois a partir dos PNG/WebP versionados, byte a byte. O resultado final ja
+# viaja em dist/. Versiona-los seria a mesma imagem tres vezes no repositorio.
+src/assets/optimized/
+src/generated/
+
+# Secoes aposentadas, mantidas so na maquina. Nenhum codigo ativo as importa.
+archive/
+.env
+.env.*
+!.env.example
+
+# Exportacoes originais das laminas da segunda secao. O pipeline le apenas os
+# lamina-*.webp ao lado; estes PNG sao a arte bruta, guardada so na maquina.
+src/assets/segundasecao/ChatGPT Image*.png

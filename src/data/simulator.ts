@@ -1,3 +1,6 @@
+import type { Icon } from "@phosphor-icons/react";
+import { Factory, Storefront, Handshake, PawPrint, Tag } from "@phosphor-icons/react";
+
 export interface SimOption {
   value: string;
   label: string;
@@ -12,7 +15,7 @@ export interface SimStep {
 
 export interface SimFlow {
   id: string;
-  icon: string;
+  icon: Icon;
   label: string;
   steps: SimStep[];
   buildMessage: (sel: Record<string, string | string[]>) => string;
@@ -20,13 +23,13 @@ export interface SimFlow {
 
 const get = (sel: Record<string, string | string[]>, field: string): string => {
   const v = sel[field];
-  return v ? (Array.isArray(v) ? v.join(", ") : v) : "—";
+  return v ? (Array.isArray(v) ? v.join(", ") : v) : "nao informado";
 };
 
 export const flows: SimFlow[] = [
   {
     id: "distribuidor",
-    icon: "🏭",
+    icon: Factory,
     label: "Quero distribuir os produtos Kelka",
     steps: [
       {
@@ -86,7 +89,7 @@ export const flows: SimFlow[] = [
   },
   {
     id: "revendedor",
-    icon: "🏪",
+    icon: Storefront,
     label: "Quero revender os produtos Kelka",
     steps: [
       {
@@ -149,7 +152,7 @@ export const flows: SimFlow[] = [
   },
   {
     id: "representante",
-    icon: "🤝",
+    icon: Handshake,
     label: "Quero ser representante comercial",
     steps: [
       {
@@ -212,7 +215,7 @@ export const flows: SimFlow[] = [
   },
   {
     id: "consumidor",
-    icon: "🐾",
+    icon: PawPrint,
     label: "Quero comprar para o meu pet",
     steps: [
       {
@@ -262,7 +265,7 @@ export const flows: SimFlow[] = [
   },
   {
     id: "marca_propria",
-    icon: "🏷️",
+    icon: Tag,
     label: "Quero fabricar tapetes com a minha marca",
     steps: [
       {

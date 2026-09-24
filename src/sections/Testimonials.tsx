@@ -1,123 +1,127 @@
-import { Swiper, SwiperSlide } from "swiper/react";
-import { Pagination, Autoplay } from "swiper/modules";
-import { motion } from "framer-motion";
+import { useState, type KeyboardEvent } from "react";
+import { AnimatePresence, m as motion } from "framer-motion";
+import { useReducedMotion } from "../hooks/useReducedMotion";
+import { CaretLeft, CaretRight, Quotes } from "@phosphor-icons/react";
 import { testimonials, type Testimonial } from "../data/content";
-import Partners from "./Partners";
+import styles from "./Testimonials.module.css";
 
-const StarRating = ({ count = 5 }: { count?: number }) => (
-  <div className="flex gap-1">
-    {[...Array(count)].map((_, i) => (
-      <span key={i} className="text-yellow-400 text-lg">★</span>
-    ))}
-  </div>
-);
-
-const TestimonialCard = ({ t }: { t: Testimonial }) => (
-  <div className="bg-white rounded-3xl p-7 h-full flex flex-col border border-emerald-50 shadow-sm hover:shadow-lg hover:shadow-emerald-100/50 transition-shadow duration-300">
-    <div className="flex items-center gap-4 mb-4">
-      {/* Avatar */}
-      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-sky-400 flex items-center justify-center text-white font-black text-xl shrink-0">
-        {t.avatar}
-      </div>
-      <div>
-        <p className="font-black text-navy text-base">{t.name}</p>
-        <p className="text-navy/50 text-xs">{t.city}</p>
-      </div>
-      <div className="ml-auto">
-        <StarRating count={t.rating} />
-      </div>
-    </div>
-
-    {/* Quote */}
-    <div className="relative flex-1">
-      <span className="absolute -top-2 -left-1 text-5xl text-emerald-200 font-serif leading-none pointer-events-none select-none">"</span>
-      <p className="text-navy/70 leading-relaxed text-sm pt-4 pl-3 relative z-10">{t.text}</p>
-    </div>
-
-    {/* Pet tag */}
-    <div className="mt-4 pt-4 border-t border-emerald-50 flex items-center gap-2">
-      <span className="text-base">🐾</span>
-      <span className="text-emerald-600 text-xs font-semibold">{t.pet}</span>
-    </div>
-  </div>
-);
+function Review({ testimonial }: { testimonial: Testimonial }) {
+  return (
+    <figure className={styles.review}>
+      <Quotes size={34} weight="fill" className={styles.quoteMark} aria-hidden="true" />
+      <blockquote>“{testimonial.text}”</blockquote>
+      <figcaption className={styles.author}>
+        <span className={styles.avatar} aria-hidden="true">{testimonial.initial}</span>
+        <span className={styles.authorDetails}>
+          <strong>{testimonial.name}</strong>
+          <span>{testimonial.city}</span>
+          <span>{testimonial.pet}</span>
+        </span>
+      </figcaption>
+    </figure>
+  );
+}
 
 export default function Testimonials() {
+  const reduce = useReducedMotion();
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [direction, setDirection] = useState(1);
+  const active = testimonials[activeIndex];
+
+  function move(step: number) {
+    setDirection(step);
+    setActiveIndex((index) => (index + step + testimonials.length) % testimonials.length);
+  }
+
+  function select(index: number) {
+    setDirection(index >= activeIndex ? 1 : -1);
+    setActiveIndex(index);
+  }
+
+  function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
+      event.preventDefault();
+      move(event.key === "ArrowRight" ? 1 : -1);
+    } else if (event.key === "Home" || event.key === "End") {
+      event.preventDefault();
+      select(event.key === "Home" ? 0 : testimonials.length - 1);
+    }
+  }
+
   return (
-    <section id="depoimentos" className="pt-24 pb-0 bg-kelka-gradient-dark relative overflow-hidden">
-      <div className="absolute inset-0 paw-pattern opacity-50 pointer-events-none" />
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-emerald-400/40 to-transparent" />
+    <section id="depoimentos" className={styles.section} aria-labelledby="testimonials-title">
+      <div className={styles.scene}>
+        <div className={styles.content}>
+          <header className={styles.header}>
+            <h2 id="testimonials-title">Quem usa, <span>aprova</span></h2>
+            <p className={styles.subtitle}>O cuidado da Kelka no dia a dia de quem tem pet.</p>
+          </header>
 
-      <div className="max-w-7xl mx-auto px-6 relative z-10">
-        {/* Header */}
-        <div className="text-center mb-14">
-          <motion.h2
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-4xl sm:text-5xl font-black text-white leading-tight mb-4"
+          <div
+            className={styles.carousel}
+            role="region"
+            aria-roledescription="carrossel"
+            aria-label="Depoimentos de clientes"
+            tabIndex={0}
+            onKeyDown={handleKeyDown}
           >
-            Quem usa,{" "}
-            <span className="text-gradient">aprova!</span>
-          </motion.h2>
+            <button className={`${styles.arrow} ${styles.previous}`} type="button" onClick={() => move(-1)} aria-label="Avaliação anterior" aria-controls="active-review">
+              <CaretLeft size={25} weight="bold" aria-hidden="true" />
+            </button>
 
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.2 }}
-            className="flex items-center justify-center gap-2 mt-2"
-          >
-            <div className="flex">
-              {[...Array(5)].map((_, i) => (
-                <span key={i} className="text-yellow-400 text-2xl">★</span>
+            <div className={styles.stack}>
+              <div className={styles.backCards} aria-hidden="true"><span /><span /><span /></div>
+              <div id="active-review" className={styles.activeReview}>
+                <AnimatePresence initial={false} mode="wait" custom={direction}>
+                  <motion.div
+                    key={active.name}
+                    className={styles.card}
+                    custom={direction}
+                    variants={{
+                      enter: (step: number) => ({ opacity: 0, x: reduce ? 0 : step * 36, rotate: reduce ? 0 : step * 1.5 }),
+                      center: { opacity: 1, x: 0, rotate: 0 },
+                      exit: (step: number) => ({ opacity: 0, x: reduce ? 0 : step * -36, rotate: reduce ? 0 : step * -1.5 }),
+                    }}
+                    initial="enter"
+                    animate="center"
+                    exit="exit"
+                    transition={{ duration: reduce ? 0 : 0.22, ease: [0.16, 1, 0.3, 1] }}
+                    drag="x"
+                    dragConstraints={{ left: 0, right: 0 }}
+                    dragElastic={0.12}
+                    onDragEnd={(_, info) => {
+                      if (Math.abs(info.offset.x) > 45 || Math.abs(info.velocity.x) > 400) move(info.offset.x < 0 ? 1 : -1);
+                    }}
+                    role="group"
+                    aria-roledescription="slide"
+                    aria-label={`Avaliação ${activeIndex + 1} de ${testimonials.length}`}
+                  >
+                    <Review testimonial={active} />
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+            </div>
+
+            <button className={`${styles.arrow} ${styles.next}`} type="button" onClick={() => move(1)} aria-label="Próxima avaliação" aria-controls="active-review">
+              <CaretRight size={25} weight="bold" aria-hidden="true" />
+            </button>
+
+            <div className={styles.pagination} aria-label="Escolher avaliação">
+              {testimonials.map((testimonial, index) => (
+                <button
+                  key={testimonial.name}
+                  type="button"
+                  onClick={() => select(index)}
+                  aria-label={`Ver avaliação de ${testimonial.name}`}
+                  aria-current={index === activeIndex ? "true" : undefined}
+                  aria-controls="active-review"
+                ><span /></button>
               ))}
             </div>
-            <span className="text-white/70 font-semibold">4.9 de 5.0 · +12.000 avaliações</span>
-          </motion.div>
+            <p className="sr-only" aria-live="polite" aria-atomic="true">Avaliação {activeIndex + 1} de {testimonials.length}. {active.name}: {active.text}</p>
+          </div>
         </div>
-
-        {/* Testimonials Swiper */}
-        <Swiper
-          modules={[Pagination, Autoplay]}
-          spaceBetween={20}
-          slidesPerView={1}
-          breakpoints={{
-            640: { slidesPerView: 2 },
-            1024: { slidesPerView: 3 },
-          }}
-          pagination={{ clickable: true }}
-          autoplay={{ delay: 3500, disableOnInteraction: false, pauseOnMouseEnter: true }}
-          className="pb-12"
-        >
-          {testimonials.map((t, i) => (
-            <SwiperSlide key={i} className="h-auto">
-              <TestimonialCard t={t} />
-            </SwiperSlide>
-          ))}
-        </Swiper>
-
-        {/* Trust badges */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="mt-10 mb-10 flex flex-wrap justify-center gap-6"
-        >
-          {[
-            { icon: "🔒", label: "Compra 100% Segura" },
-            { icon: "🚚", label: "Entrega Garantida" },
-            { icon: "💬", label: "Suporte 24/7" },
-          ].map((b) => (
-            <div key={b.label} className="glass-card flex items-center gap-2 px-5 py-2.5 rounded-full">
-              <span>{b.icon}</span>
-              <span className="text-white/80 text-sm font-semibold">{b.label}</span>
-            </div>
-          ))}
-        </motion.div>
       </div>
-
-      <Partners />
     </section>
   );
 }

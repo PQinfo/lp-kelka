@@ -1,3 +1,5 @@
+> Documento histórico, anterior à refatoração de setembro de 2026. Para execução e arquitetura atuais, consulte README.md e IMPLEMENTACAO_MELHORIAS_2026-09-24.md.
+
 # Análise técnica e recomendações — LP Kelka
 
 **Data da análise:** 22 de julho de 2026  

@@ -1,359 +1,218 @@
-import { useEffect, useRef, useState, useCallback } from "react";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useEffect, useRef, type FormEvent } from "react";
+import { m as motion, AnimatePresence } from "framer-motion";
+import { useReducedMotion } from "../hooks/useReducedMotion";
+import { ArrowRight, ArrowLeft, CaretRight, ChartBar, Check, GearSix, ShoppingCart, WhatsappLogo } from "@phosphor-icons/react";
 import { flows } from "../data/simulator";
+import { stats } from "../data/content";
+import { cta, whatsappUrl } from "../data/site";
+import StateMapIcon from "../components/StateMapIcon";
+import { images } from "../generated/images";
+import { imageProps } from "../lib/image";
+import { useSimulator } from "../hooks/useSimulator";
+import { useLocationSearch } from "../hooks/useLocationSearch";
+import { track } from "../lib/telemetry";
+import type { FlowId, InterestId, SimulatorAction } from "../lib/simulator";
+import styles from "./CTA.module.css";
 
-gsap.registerPlugin(ScrollTrigger);
+const interests = [
+  { id: "comprar", title: "Quero comprar", description: "Encontre o tapete ideal para o seu pet", icon: ShoppingCart, flowId: "consumidor" },
+  { id: "revender", title: "Quero revender", description: "Leve os produtos Kelka para a sua região", icon: ChartBar, flowId: null },
+  { id: "terceirizar", title: "Quero terceirizar", description: "Produção sob medida para a sua marca", icon: GearSix, flowId: "marca_propria" },
+] as const;
 
-type Phase = "start" | "initial" | "steps" | "result";
-
-const WA = "554835248058";
+const resaleProfiles = [
+  { flowId: "revendedor", title: "Tenho uma loja ou pet shop", description: "Compre produtos para revender no seu negócio" },
+  { flowId: "distribuidor", title: "Quero ser distribuidor", description: "Distribua os produtos Kelka na sua região" },
+  { flowId: "representante", title: "Quero ser representante", description: "Conecte sua carteira de clientes à Kelka" },
+] as const;
 
 export default function CTA() {
-  const sectionRef    = useRef<HTMLElement>(null);
-  const counterRefs   = useRef<(HTMLDivElement | null)[]>([]);
-  const cardRef       = useRef<HTMLDivElement>(null);
-
-  const counters = [
-    { target: 30, label: "Tapetes produzidos",         format: (v: number) => `${v}M+`      },
-    { target: 8,  label: "Experiência no mercado pet", format: (v: number) => `${v} Anos+`  },
-    { target: 3,  label: "Atendidos diretamente",      format: (v: number) => `${v} Estados` },
-  ];
-
+  const reduce = useReducedMotion();
+  const { phase, interestId, flowId, stepIndex, selections, labels, dispatch, currentFlow, currentStep, canContinue } = useSimulator();
+  const questionRef = useRef<HTMLHeadingElement>(null);
+  const focusNextScreen = useRef(false);
+  const transitioning = useRef(false);
+  const search = useLocationSearch();
   useEffect(() => {
-    const ctx = gsap.context(() => {
-      counterRefs.current.forEach((el, i) => {
-        if (!el) return;
-        const { target, format } = counters[i];
-        const obj = { val: 0 };
-        el.textContent = format(0);
-        gsap.to(obj, {
-          val: target,
-          duration: 2,
-          ease: "power2.out",
-          scrollTrigger: { trigger: el, start: "top 85%", once: true },
-          onUpdate() { el.textContent = format(Math.round(obj.val)); },
-        });
-      });
-    }, sectionRef);
-    return () => ctx.revert();
-  }, []);
+    const id = new URLSearchParams(search).get("interesse");
+    if (id === "comprar" || id === "revender" || id === "terceirizar") dispatch({type: "interest", id});
+  }, [search, dispatch]);
+  const isStateStep = currentStep?.field === "estado";
+  const preliminarySteps = interestId === "revender" ? 2 : 1;
+  const totalSteps = currentFlow ? currentFlow.steps.length + preliminarySteps : null;
+  const stepNumber = phase === "interest" ? 1 : phase === "profile" ? 2 : stepIndex + preliminarySteps + 1;
+  const progress = phase === "result" ? 1 : totalSteps ? stepNumber / totalSteps : phase === "profile" ? 0.3 : 0.18;
+  const screenKey = phase === "steps" ? `${flowId}-${stepIndex}` : phase;
+  const currentValue = currentStep ? selections[currentStep.field] : undefined;
+  const title = phase === "interest" ? "Qual é o seu interesse?" : phase === "profile" ? "Qual é o seu perfil?" : phase === "result" ? "Vamos conversar?" : currentStep?.question;
+  const subtitle = phase === "interest" ? "Toque em uma opção para avançar." : phase === "profile" ? "Escolha seu perfil para avançar." : phase === "result" ? "Confira suas respostas e fale com a nossa equipe." : currentStep?.multiSelect ? "Selecione os segmentos e toque em Ver resumo." : "Toque em uma opção para avançar.";
 
-  // ── Simulator state ──────────────────────────────────────────────────────────
-  const [phase, setPhase]           = useState<Phase>("start");
-  const [flowId, setFlowId]         = useState<string | null>(null);
-  const [stepIndex, setStepIndex]   = useState(0);
-  const [selections, setSelections] = useState<Record<string, string | string[]>>({});
-  const [multiBuffer, setMultiBuffer] = useState<string[]>([]);
-  const [highlighted, setHighlighted] = useState<string | null>(null);
-
-  const currentFlow = flows.find(f => f.id === flowId) ?? null;
-  const currentStep = currentFlow?.steps[stepIndex] ?? null;
-  const totalSteps  = currentFlow?.steps.length ?? 0;
-  const progress    = totalSteps > 0 ? Math.round(((stepIndex + 1) / totalSteps) * 100) : 0;
-
-  const transition = useCallback((dir: 1 | -1, cb: () => void) => {
-    const el = cardRef.current;
-    if (!el) { cb(); return; }
-    gsap.to(el, {
-      opacity: 0, x: dir > 0 ? -24 : 24, duration: 0.22, ease: "power2.in",
-      onComplete: () => {
-        cb();
-        gsap.fromTo(el,
-          { opacity: 0, x: dir > 0 ? 24 : -24 },
-          { opacity: 1, x: 0, duration: 0.28, ease: "power2.out" }
-        );
-      },
-    });
-  }, []);
-
-  const advance = useCallback((newSel: Record<string, string | string[]>) => {
-    const next = stepIndex + 1;
-    setTimeout(() => {
-      transition(1, () => {
-        setSelections(newSel);
-        setHighlighted(null);
-        setMultiBuffer([]);
-        if (next < totalSteps) setStepIndex(next);
-        else setPhase("result");
-      });
-    }, 260);
-  }, [stepIndex, totalSteps, transition]);
-
-  const selectFlow = (id: string) => {
-    transition(1, () => {
-      setFlowId(id); setPhase("steps"); setStepIndex(0);
-      setSelections({}); setMultiBuffer([]); setHighlighted(null);
-    });
-  };
-
-  const selectSingle = (field: string, label: string) => {
-    setHighlighted(label);
-    advance({ ...selections, [field]: label });
-  };
-
-  const toggleMulti = (label: string) => {
-    setMultiBuffer(prev =>
-      prev.includes(label) ? prev.filter(l => l !== label) : [...prev, label]
-    );
-  };
-
-  const confirmMulti = () => {
-    if (!currentStep || multiBuffer.length === 0) return;
-    advance({ ...selections, [currentStep.field]: [...multiBuffer] });
-  };
-
-  const goBack = () => {
-    if (phase === "result") {
-      transition(-1, () => { setPhase("steps"); setStepIndex(totalSteps - 1); setHighlighted(null); });
-    } else if (stepIndex > 0) {
-      transition(-1, () => { setStepIndex(s => s - 1); setHighlighted(null); setMultiBuffer([]); });
-    } else if (phase === "steps") {
-      transition(-1, () => { setPhase("initial"); setFlowId(null); setHighlighted(null); setMultiBuffer([]); });
-    } else if (phase === "initial") {
-      transition(-1, () => { setPhase("start"); });
-    }
-  };
-
-  const restart = () => {
-    transition(-1, () => {
-      setPhase("start"); setFlowId(null); setStepIndex(0);
-      setSelections({}); setMultiBuffer([]); setHighlighted(null);
-    });
-  };
-
-  const whatsappLink = (() => {
-    if (!currentFlow) return "#";
-    return `https://wa.me/${WA}?text=${encodeURIComponent(currentFlow.buildMessage(selections))}`;
-  })();
+  function beginTransition() {
+    if (transitioning.current) return false;
+    transitioning.current = true;
+    focusNextScreen.current = true;
+    return true;
+  }
+  function advance(action: SimulatorAction) {
+    if (!beginTransition()) return;
+    if (action.type === "interest") track("simulator_start", {interest: action.id});
+    else if (phase === "steps" && currentFlow && stepIndex === currentFlow.steps.length - 1) track("simulator_complete", {flow: currentFlow.id});
+    else track("simulator_step", {flow: flowId ?? "", step: stepIndex});
+    dispatch(action);
+  }
+  function chooseInterest(id: InterestId) { advance({type: "interest", id, advance: true}); }
+  function chooseProfile(id: FlowId) { advance({type: "profile", id, advance: true}); }
+  function chooseAnswer(value: string) {
+    if (transitioning.current) return;
+    if (currentStep?.multiSelect) dispatch({type: "answer", value});
+    else advance({type: "answer", value, advance: true});
+  }
+  function confirmSelection(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (phase === "steps" && currentStep?.multiSelect && canContinue) advance({type: "next"});
+  }
+  function goBack() { if (beginTransition()) dispatch({type: "back"}); }
+  function restart() { if (beginTransition()) dispatch({type: "reset"}); }
 
   return (
-    <section
-      ref={sectionRef}
-      id="contato"
-      className="py-24 px-6 bg-kelka-gradient relative overflow-hidden"
-    >
-      <div className="absolute inset-0 paw-pattern opacity-70 pointer-events-none" />
-
-      <div className="max-w-2xl mx-auto relative z-10">
-        {/* Simulator card */}
-        <div className="text-center mb-8">
-          <h2 className="text-3xl sm:text-4xl font-black text-white mb-2">
-            Fale com a <span className="text-gradient">Kelka</span>
-          </h2>
+    <section id="contato" className={styles.section} aria-labelledby="contact-title">
+      <img {...imageProps(images.simulator, "100vw")} alt="" aria-hidden="true" loading="lazy" decoding="async" className={styles.backgroundFill} />
+      <img {...imageProps(images.simulator, "100vw")} alt="" aria-hidden="true" loading="lazy" decoding="async" className={styles.background} />
+      <div className={styles.container}>
+        <div className={styles.intro}>
+          <p className={styles.eyebrow}>Atendimento especializado<span aria-hidden="true" /></p>
+          <h2 id="contact-title">Vamos conversar{" "}<br />sobre o que você precisa</h2>
+          <p className={styles.description}>Quer comprar tapetes para o seu pet, revender nossos produtos ou produzir com a sua marca? Nossa equipe agiliza o contato com o consultor que pode ajudar você.</p>
+          <dl className={styles.stats}>
+            {stats.map((stat) => (
+              <div key={stat.label}>
+                <dt>{stat.label}</dt>
+                <dd><span className={styles.statValue}>{stat.format(stat.target)}</span></dd>
+              </div>
+            ))}
+          </dl>
         </div>
 
-        <div ref={cardRef} className="glass-card rounded-3xl p-7 sm:p-10">
+        <form className={`${styles.panel} requires-js`} onSubmit={confirmSelection} aria-label="Simulador de atendimento Kelka">
+          <div className={styles.progress}>
+            <span className={styles.progressTrack} aria-hidden="true">
+              <motion.span animate={{ scaleX: progress }} transition={{ duration: reduce ? 0 : 0.3 }} />
+            </span>
+            <p aria-live="polite">{phase === "result" ? "Tudo pronto" : `Passo ${stepNumber}${totalSteps && phase === "steps" ? ` de ${totalSteps}` : ""}`}</p>
+          </div>
 
-          {/* Progress */}
-          {phase === "steps" && (
-            <div className="mb-7">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-white/40 text-xs font-semibold">{stepIndex + 1} / {totalSteps}</span>
-                <span className="text-white/40 text-xs">{progress}%</span>
-              </div>
-              <div className="h-1 bg-white/10 rounded-full overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-all duration-500 ease-out"
-                  style={{ width: `${progress}%`, background: "linear-gradient(90deg,#5CCDA7,#00A2D6)" }}
-                />
-              </div>
-            </div>
-          )}
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={screenKey}
+              variants={{
+                hidden: { opacity: 0, y: reduce ? 0 : 10 },
+                visible: { opacity: 1, y: 0 },
+                exit: { opacity: 0, y: reduce ? 0 : -10 },
+              }}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              transition={{ duration: reduce ? 0 : 0.18, ease: [0.16, 1, 0.3, 1] }}
+              onAnimationComplete={(definition) => {
+                if (definition === "visible") {
+                  transitioning.current = false;
+                  if (focusNextScreen.current) {
+                    questionRef.current?.focus({ preventScroll: true });
+                    questionRef.current?.scrollIntoView({ block: "nearest", behavior: reduce ? "instant" : "smooth" });
+                    focusNextScreen.current = false;
+                  }
+                }
+              }}
+            >
+              <h3 id="simulator-question" ref={questionRef} tabIndex={-1} className={styles.question}>{title}</h3>
+              <p className={styles.subtitle}>{subtitle}</p>
 
-          {/* ── START ── */}
-          {phase === "start" && (
-            <div className="text-center py-4">
-              {/* Chat bubbles */}
-              <div className="flex flex-col items-start gap-2 mb-6 px-2">
-                {/* Bubble 1 — mensagem */}
-                <div className="flex items-end gap-2">
-                  <div className="w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-xs font-black text-white"
-                    style={{ background: "linear-gradient(135deg,#5CCDA7,#00A2D6)" }}>K</div>
-                  <div
-                    className="px-4 py-2.5 rounded-2xl rounded-tl-sm text-sm font-medium text-white max-w-[220px] text-left"
-                    style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.15)" }}
-                  >
-                    Olá! Como posso te ajudar hoje? 👋
-                  </div>
-                </div>
-
-                {/* Bubble 2 — typing */}
-                <div className="flex items-end gap-2 self-end">
-                  <div
-                    className="px-4 py-3 rounded-2xl rounded-tr-sm flex items-center gap-1.5"
-                    style={{ background: "linear-gradient(135deg,#5CCDA7,#00A2D6)", boxShadow: "0 4px 20px rgba(92,205,167,0.35)" }}
-                  >
-                    {[0, 1, 2].map(i => (
-                      <span
-                        key={i}
-                        className="block w-2 h-2 rounded-full bg-white"
-                        style={{ animation: "typing-dot 1.2s ease-in-out infinite", animationDelay: `${i * 0.2}s` }}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
-              <p className="text-white font-black text-xl mb-2">Encontre o atendimento certo</p>
-              <p className="text-white/50 text-sm mb-8 max-w-sm mx-auto">
-                Responda algumas perguntas e te conectamos com o consultor ideal.
-              </p>
-
-              {/* Counters as social proof */}
-              <div className="grid grid-cols-3 gap-4 mb-8 py-6 border-y border-white/10">
-                {counters.map((c, i) => (
-                  <div key={c.label}>
-                    <div
-                      ref={el => { counterRefs.current[i] = el; }}
-                      className="text-2xl sm:text-3xl font-black text-white mb-0.5"
-                    >
-                      0
-                    </div>
-                    <div className="text-white/45 text-xs font-medium">{c.label}</div>
-                  </div>
-                ))}
-              </div>
-
-              <button
-                onClick={() => transition(1, () => setPhase("initial"))}
-                className="shimmer-btn text-white font-black text-base px-10 py-4 rounded-2xl inline-flex items-center gap-3"
-              >
-                Começar <span>→</span>
-              </button>
-            </div>
-          )}
-
-          {/* ── INITIAL ── */}
-          {phase === "initial" && (
-            <div>
-              <p className="text-white font-black text-lg mb-1">Como podemos ajudar?</p>
-              <p className="text-white/45 text-sm mb-5">Escolha uma opção para encontrar o atendimento ideal:</p>
-              <div className="flex flex-col gap-2.5">
-                {flows.map(flow => (
-                  <button
-                    key={flow.id}
-                    onClick={() => selectFlow(flow.id)}
-                    className="flex items-center gap-4 p-4 rounded-2xl border text-left transition-all duration-200 hover:border-emerald-400/40 hover:bg-emerald-400/5 group"
-                    style={{ borderColor: "rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.02)" }}
-                  >
-                    <span className="text-xl shrink-0">{flow.icon}</span>
-                    <span className="text-white/75 group-hover:text-white text-sm font-medium transition-colors flex-1">{flow.label}</span>
-                    <span className="text-white/25 group-hover:text-emerald-400 transition-colors text-base shrink-0">→</span>
-                  </button>
-                ))}
-              </div>
-              <button onClick={goBack} className="mt-5 text-white/35 hover:text-white/65 text-sm flex items-center gap-1.5 transition-colors">
-                ← Voltar
-              </button>
-            </div>
-          )}
-
-          {/* ── STEPS ── */}
-          {phase === "steps" && currentStep && (
-            <div>
-              <p className="text-white font-black text-lg mb-1">{currentStep.question}</p>
-              {currentStep.multiSelect
-                ? <p className="text-white/40 text-xs mb-4">Você pode selecionar mais de uma opção</p>
-                : <div className="mb-4" />
-              }
-              <div className="flex flex-col gap-2">
-                {currentStep.options.map(opt => {
-                  const active = currentStep.multiSelect
-                    ? multiBuffer.includes(opt.label)
-                    : highlighted === opt.label;
-                  return (
-                    <button
-                      key={opt.value}
-                      onClick={() => currentStep.multiSelect ? toggleMulti(opt.label) : selectSingle(currentStep.field, opt.label)}
-                      className="flex items-center gap-3 p-3.5 rounded-xl border text-left transition-all duration-150"
-                      style={{
-                        borderColor: active ? "rgba(92,205,167,0.5)" : "rgba(255,255,255,0.08)",
-                        background:  active ? "rgba(92,205,167,0.08)" : "rgba(255,255,255,0.02)",
-                      }}
-                    >
-                      <span
-                        className="w-4 h-4 shrink-0 flex items-center justify-center transition-all duration-150"
-                        style={{
-                          borderRadius: currentStep.multiSelect ? "4px" : "50%",
-                          border: `2px solid ${active ? "#5CCDA7" : "rgba(255,255,255,0.2)"}`,
-                          background: active ? "#5CCDA7" : "transparent",
-                        }}
-                      >
-                        {active && (
-                          <svg viewBox="0 0 10 10" className="w-2.5 h-2.5" fill="none">
-                            <path d="M2 5l2.5 2.5L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                        )}
-                      </span>
-                      <span className="text-sm font-medium transition-colors" style={{ color: active ? "#fff" : "rgba(255,255,255,0.65)" }}>
-                        {opt.label}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-              {currentStep.multiSelect && (
-                <button onClick={confirmMulti} disabled={multiBuffer.length === 0}
-                  className="shimmer-btn mt-5 text-white font-black text-sm px-7 py-3 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed">
-                  Continuar →
-                </button>
+              {phase === "interest" && (
+                <fieldset className={styles.options} aria-labelledby="simulator-question">
+                  {interests.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <button key={item.id} type="button" className={styles.interestOption} data-selected={interestId === item.id} aria-pressed={interestId === item.id} onClick={() => chooseInterest(item.id)}>
+                        <span className={styles.optionIcon}><Icon size={28} weight="regular" aria-hidden="true" /></span>
+                        <span className={styles.optionText}><strong>{item.title}</strong><span>{item.description}</span></span>
+                        <CaretRight size={20} weight="bold" className={styles.caret} aria-hidden="true" />
+                      </button>
+                    );
+                  })}
+                </fieldset>
               )}
-              <button onClick={goBack} className="mt-5 text-white/35 hover:text-white/65 text-sm flex items-center gap-1.5 transition-colors">
-                ← Voltar
-              </button>
-            </div>
-          )}
 
-          {/* ── RESULT ── */}
-          {phase === "result" && currentFlow && (
-            <div>
-              <div className="text-center mb-7">
-                <div className="flex items-center justify-center mb-3">
-                  <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
-                    <defs>
-                      <linearGradient id="check-grad" x1="0" y1="0" x2="56" y2="56" gradientUnits="userSpaceOnUse">
-                        <stop offset="0%" stopColor="#5CCDA7"/>
-                        <stop offset="100%" stopColor="#00A2D6"/>
-                      </linearGradient>
-                    </defs>
-                    <circle cx="28" cy="28" r="28" fill="url(#check-grad)" opacity="0.15"/>
-                    <circle cx="28" cy="28" r="20" fill="url(#check-grad)"/>
-                    <path d="M18 28l7 7 13-13" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
+              {phase === "profile" && (
+                <fieldset className={styles.options} aria-labelledby="simulator-question">
+                  {resaleProfiles.map((profile) => {
+                    const Icon = flows.find((flow) => flow.id === profile.flowId)!.icon;
+                    return (
+                      <button key={profile.flowId} type="button" className={styles.interestOption} data-selected={flowId === profile.flowId} aria-pressed={flowId === profile.flowId} onClick={() => chooseProfile(profile.flowId)}>
+                        <span className={styles.optionIcon}><Icon size={28} aria-hidden="true" /></span>
+                        <span className={styles.optionText}><strong>{profile.title}</strong><span>{profile.description}</span></span>
+                        <CaretRight size={20} weight="bold" className={styles.caret} aria-hidden="true" />
+                      </button>
+                    );
+                  })}
+                </fieldset>
+              )}
+
+              {phase === "steps" && currentStep && (
+                <fieldset className={styles.answerOptions} aria-labelledby="simulator-question">
+                  {currentStep.options.map((option) => {
+                    const checked = Array.isArray(currentValue) ? currentValue.includes(option.value) : currentValue === option.value;
+                    const className = `${styles.answerOption}${isStateStep ? ` ${styles.stateAnswer}` : ""}`;
+                    const content = <>
+                      {isStateStep && <StateMapIcon state={option.value} className={styles.stateMap} />}
+                      <span className={styles.choiceMark} aria-hidden="true">{checked && !isStateStep && <Check size={12} weight="bold" />}</span>
+                      <span>{option.label}</span>
+                    </>;
+                    return currentStep.multiSelect ? (
+                      <label key={option.value} className={className}>
+                        <input type="checkbox" name={currentStep.field} value={option.value} checked={checked} onChange={() => chooseAnswer(option.value)} />
+                        {content}
+                      </label>
+                    ) : (
+                      <button key={option.value} type="button" className={className} data-selected={checked} aria-pressed={checked} onClick={() => chooseAnswer(option.value)}>
+                        {content}
+                      </button>
+                    );
+                  })}
+                </fieldset>
+              )}
+
+              {phase === "result" && currentFlow && (
+                <dl className={styles.summary}>
+                  <div><dt>Seu interesse</dt><dd>{currentFlow.label}</dd></div>
+                  {currentFlow.steps.map((step) => {
+                    const value = labels[step.field];
+                    return <div key={step.field}><dt>{step.question}</dt><dd>{Array.isArray(value) ? value.join(", ") : value}</dd></div>;
+                  })}
+                </dl>
+              )}
+
+              {phase !== "interest" && <div className={styles.actions}>
+                {phase === "result" && currentFlow ? (
+                  <a href={whatsappUrl(currentFlow.buildMessage(labels))} target="_blank" rel="noopener noreferrer" onClick={() => track("contact_click", {source: "simulator", flow: currentFlow.id})} className={styles.primaryButton}>
+                    <WhatsappLogo size={22} aria-hidden="true" />{cta.whatsapp}<ArrowRight size={20} aria-hidden="true" />
+                  </a>
+                ) : phase === "steps" && currentStep?.multiSelect ? (
+                  <button type="submit" disabled={!canContinue} className={styles.primaryButton}>Ver resumo<ArrowRight size={20} aria-hidden="true" /></button>
+                ) : null}
+                <div className={styles.secondaryActions}>
+                  <button type="button" onClick={goBack}><ArrowLeft size={16} aria-hidden="true" />Voltar</button>
+                  {phase === "result" && <button type="button" onClick={restart}>Recomeçar</button>}
                 </div>
-                <p className="text-white font-black text-xl mb-1">Tudo pronto!</p>
-                <p className="text-white/50 text-sm">Veja o resumo e inicie a conversa no WhatsApp.</p>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-7">
-                {currentFlow.steps.map(step => {
-                  const val = selections[step.field];
-                  if (!val) return null;
-                  const display = Array.isArray(val) ? val.join(", ") : val;
-                  return (
-                    <div key={step.field} className="rounded-xl p-3.5"
-                      style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                      <p className="text-white/35 text-xs font-bold uppercase tracking-wider mb-1 truncate">{step.question}</p>
-                      <p className="text-white text-sm font-semibold">{display}</p>
-                    </div>
-                  );
-                })}
-              </div>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <a href={whatsappLink} target="_blank" rel="noopener noreferrer"
-                  className="shimmer-btn text-white font-black text-base px-8 py-4 rounded-2xl flex items-center justify-center gap-3 flex-1">
-                  <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 shrink-0">
-                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/>
-                  </svg>
-                  Iniciar conversa no WhatsApp
-                </a>
-                <button onClick={restart}
-                  className="text-white/45 hover:text-white text-sm font-medium px-6 py-4 rounded-2xl border border-white/10 hover:border-white/20 transition-all">
-                  Recomeçar
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
+              </div>}
+            </motion.div>
+          </AnimatePresence>
+
+          <p className={styles.whatsappNote}>
+            <WhatsappLogo size={27} aria-hidden="true" />
+            <span>Preencha as etapas e envie sua mensagem diretamente pelo WhatsApp.</span>
+          </p>
+        </form>
+        <noscript><div className={styles.panel}><h3 className={styles.question}>Fale com a nossa equipe</h3><p className={styles.subtitle}>Conte o que você precisa e receba atendimento pelo WhatsApp.</p><a className={styles.primaryButton} href={whatsappUrl("Olá! Gostaria de falar com a equipe Kelka.")}>Falar no WhatsApp</a></div></noscript>
       </div>
     </section>
   );

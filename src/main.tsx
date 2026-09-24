@@ -1,5 +1,11 @@
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App'
-
-createRoot(document.getElementById('root')!).render(<App />)
+import { createRoot, hydrateRoot } from 'react-dom/client';
+import './index.css';
+import App from './App';
+import { startTelemetry } from './lib/telemetry';
+const root = document.getElementById('root');
+if (!root) throw new Error('Missing application root');
+if (root.hasChildNodes()) hydrateRoot(root, <App />);
+else createRoot(root).render(<App />);
+const start = () => { void startTelemetry().catch(() => { /* Optional telemetry must never interrupt the page. */ }); };
+if ('requestIdleCallback' in window) window.requestIdleCallback(start, {timeout:5000});
+else globalThis.setTimeout(start,3000);

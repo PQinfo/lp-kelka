@@ -1,149 +1,255 @@
-import { useEffect, useRef } from "react";
-import { gsap } from "gsap";
+import { useRef } from "react";
+import { m as motion, useScroll, useTransform } from "framer-motion";
+import { useReducedMotion } from "../hooks/useReducedMotion";
+import { ArrowRight, Drop, ShieldCheck, PawPrint, Leaf } from "@phosphor-icons/react";
+import { images } from "../generated/images";
+import { imageProps } from "../lib/image";
 
-const PawSVG = () => (
-  <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" width="24" height="24">
-    <ellipse cx="20" cy="10" rx="7" ry="9" fill="currentColor" />
-    <ellipse cx="44" cy="10" rx="7" ry="9" fill="currentColor" />
-    <ellipse cx="10" cy="28" rx="6" ry="8" fill="currentColor" />
-    <ellipse cx="54" cy="28" rx="6" ry="8" fill="currentColor" />
-    <ellipse cx="32" cy="46" rx="18" ry="14" fill="currentColor" />
-  </svg>
-);
+const CTA_GRADIENT = "linear-gradient(135deg, #00A2D6 0%, #5CCDA7 100%)";
+const EASE = [0.22, 1, 0.36, 1] as const;
 
-const pawConfigs = [
-  { left: "2%",  bottom: "10px", color: "#5CCDA7", size: 20, delay: 0    },
-  { left: "18%", bottom: "0px",  color: "#00A2D6", size: 16, delay: 0.7  },
-  { left: "35%", bottom: "14px", color: "#5CCDA7", size: 22, delay: 1.4  },
-  { left: "55%", bottom: "4px",  color: "#00A2D6", size: 18, delay: 2.1  },
-  { left: "72%", bottom: "10px", color: "#5CCDA7", size: 14, delay: 2.8  },
-  { left: "88%", bottom: "2px",  color: "#00A2D6", size: 20, delay: 0.35 },
-];
 
 export default function Hero() {
-  const heroRef = useRef<HTMLElement>(null);
+  const reduce = useReducedMotion();
+  const sectionRef = useRef<HTMLElement>(null);
 
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      // Entrance animations
-      gsap.from(".hero-badge",      { y: -20, opacity: 0, duration: 0.6, ease: "power3.out" });
-      gsap.from(".hero-title-line", { y: 50,  opacity: 0, duration: 0.8, ease: "power3.out", stagger: 0.15, delay: 0.2 });
-      gsap.from(".hero-subtitle",   { y: 25,  opacity: 0, duration: 0.7, ease: "power3.out", delay: 0.5 });
-      gsap.from(".hero-cta",        { y: 20,  opacity: 0, duration: 0.6, ease: "power3.out", stagger: 0.12, delay: 0.7 });
-      gsap.from(".hero-stat",       { y: 20,  opacity: 0, duration: 0.6, ease: "power3.out", stagger: 0.1,  delay: 0.9 });
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start start", "end start"],
+  });
+  const kDrift = useTransform(scrollYProgress, [0, 1], ["0%", "10%"]);
+  const contentDrift = useTransform(scrollYProgress, [0, 1], ["0%", "-7%"]);
+  const contentFade = useTransform(scrollYProgress, [0, 0.75], [1, 0]);
 
-      // Floating paws — cada uma tem seu próprio timeline em loop infinito
-      document.querySelectorAll<HTMLElement>(".floating-paw").forEach((paw, i) => {
-        const config = pawConfigs[i];
-        gsap.timeline({ repeat: -1, delay: config.delay })
-          .set(paw, { opacity: 0, y: 0, scale: 0.6, rotation: gsap.utils.random(-25, 25) as number })
-          .to(paw, { opacity: 0.9, scale: 1, duration: 0.4, ease: "power2.out" })
-          .to(paw, { y: -70, opacity: 0, scale: 1.3, duration: 2, ease: "power1.out" }, "-=0.1");
-      });
-    }, heroRef);
-
-    return () => ctx.revert();
-  }, []);
+  const step = (delay: number, y = 20) => ({
+    initial: reduce ? false : { opacity: 0, y },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.8, delay, ease: EASE },
+  });
 
   return (
     <section
-      ref={heroRef}
+      ref={sectionRef}
       id="hero"
-      className="relative min-h-screen flex flex-col overflow-hidden"
+      className="relative isolate min-h-[100svh] overflow-hidden bg-[#00283b]"
     >
-      {/* Background image — desktop */}
+      {/* Painel escuro. Termina onde a faixa começa (não no pé da seção), e o
+          canto inferior esquerdo arredondado deixa o branco contornar por ali. */}
       <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat hidden sm:block"
-        style={{ backgroundImage: `url(${import.meta.env.BASE_URL}hero-banner.webp)` }}
-      />
-      {/* Background image — mobile */}
-      <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat block sm:hidden"
-        style={{ backgroundImage: `url(${import.meta.env.BASE_URL}banner-mobile.webp)` }}
+        aria-hidden="true"
+        className="absolute inset-0 -z-40 overflow-hidden"
+        style={{ backgroundColor: "#00283B" }}
       />
 
-      {/* Overlay — mobile: escurece de baixo pra cima / desktop: esquerda pra direita */}
+      {/* Fundo azul-marinho da marca, escurecendo nas bordas. Dois focos radiais
+          muito discretos dão profundidade. Sem preto puro. */}
       <div
-        className="absolute inset-0 block sm:hidden"
+        aria-hidden="true"
+        className="absolute inset-0 -z-30 overflow-hidden"
         style={{
-          background: "linear-gradient(to top, rgba(0,20,35,0.95) 0%, rgba(0,28,45,0.75) 45%, rgba(0,28,45,0.2) 75%, transparent 100%)",
+          background: [
+            "radial-gradient(54% 50% at 78% 42%, rgba(0,162,214,0.17) 0%, rgba(0,162,214,0) 62%)",
+            "radial-gradient(56% 50% at 4% 4%, rgba(0,72,104,0.8) 0%, rgba(0,72,104,0) 68%)",
+            "radial-gradient(46% 38% at 16% 96%, rgba(0,60,87,0.62) 0%, rgba(0,60,87,0) 72%)",
+            "radial-gradient(120% 92% at 50% 46%, rgba(0,0,0,0) 46%, rgba(0,20,31,0.5) 100%)",
+            "linear-gradient(155deg, #003C57 0%, #00304A 40%, #00283B 72%, #001E2C 100%)",
+          ].join(","),
         }}
       />
-      <div
-        className="absolute inset-0 hidden sm:block"
+
+      {/* Círculo enorme, parcialmente fora da viewport. Único elemento
+          decorativo acrescentado: o K já traz o próprio arco e o próprio disco. */}
+      <motion.div data-reveal
+        aria-hidden="true"
+        initial={reduce ? false : { opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 1.6, delay: 1.05, ease: EASE }}
+        className="absolute -z-20 hidden sm:block rounded-pill pointer-events-none"
         style={{
-          background: "linear-gradient(to right, rgba(0,28,45,0.88) 0%, rgba(0,40,60,0.72) 45%, rgba(0,40,60,0.1) 65%, transparent 100%)",
+          top: "-18%",
+          right: "-20%",
+          width: "min(72vw, 66rem)",
+          aspectRatio: "1 / 1",
+          border: "1px solid rgba(92,205,167,0.075)",
         }}
       />
 
-      {/* Main content */}
-      <div className="relative z-10 flex-1 flex items-end sm:items-center px-6 pt-28 pb-32 sm:pb-16 max-w-7xl mx-auto w-full">
-        <div className="w-full sm:max-w-xl">
+      {/* ── K-hero ────────────────────────────────────────────────────────── */}
+      <motion.div data-reveal
+        aria-hidden="true"
+        className="absolute inset-0 -z-10 overflow-hidden pointer-events-none"
+        style={{ y: reduce ? 0 : kDrift }}
+      >
+        {/* Entrada pela direita, feita em CSS (ver .hero-k-entrada no index.css).
+            O parallax de scroll continua no Framer Motion, na div de cima. */}
+        <picture
+          className="hero-k-entrada absolute block [--k-right:-18%] [--k-top:auto] [--k-bottom:17%] [--k-w:118vw] sm:[--k-right:5%] sm:[--k-top:11vh] sm:[--k-bottom:auto] sm:[--k-w:clamp(27rem,45vw,54rem)]"
+          style={{
+            right: "var(--k-right)",
+            top: "var(--k-top)",
+            bottom: "var(--k-bottom)",
+            width: "var(--k-w)",
+            transformOrigin: "72% 45%",
+          }}
+        >
+          <img
+            {...imageProps(images.hero, "(max-width: 639px) 118vw, 45vw")}
+            alt=""
+            fetchPriority="high"
+            decoding="async"
+            className="w-full h-auto select-none"
+          />
+        </picture>
+      </motion.div>
 
-          {/* Title */}
-          <div className="relative mb-4 sm:mb-6">
-            <h1 className="font-black leading-tight text-white text-center sm:text-left">
-              <span className="hero-title-line block text-4xl sm:text-6xl lg:text-7xl">
-                Seu Pet{" "}
-                <span style={{
-                  background: "linear-gradient(135deg, #5CCDA7 0%, #00A2D6 100%)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  backgroundClip: "text",
-                }}>
-                  Merece
-                </span>
-              </span>
-              <span className="hero-title-line block text-4xl sm:text-6xl lg:text-7xl">
-                o Melhor
-              </span>
-            </h1>
+      {/* No mobile o conteúdo divide espaço com o K. Este véu mantém a leitura
+          sem precisar apagar a peça. */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 -z-[5] sm:hidden pointer-events-none"
+        style={{
+          background:
+            "linear-gradient(180deg, rgba(0,40,59,0.97) 0%, rgba(0,40,59,0.9) 38%, rgba(0,40,59,0.55) 58%, rgba(0,40,59,0.1) 78%, rgba(0,40,59,0) 100%)",
+        }}
+      />
 
-            {/* Patinhas flutuantes */}
-            <div className="relative h-10 mt-2 overflow-visible pointer-events-none">
-              {pawConfigs.map((cfg, i) => (
-                <span
-                  key={i}
-                  className="floating-paw absolute"
-                  style={{
-                    left: cfg.left,
-                    bottom: cfg.bottom,
-                    color: cfg.color,
-                    width: cfg.size,
-                    height: cfg.size,
-                    opacity: 0,
-                  }}
-                >
-                  <PawSVG />
-                </span>
-              ))}
-            </div>
-          </div>
-
-          {/* Subtitle */}
-          <p
-            className="hero-subtitle text-base sm:text-xl mb-8 sm:mb-10 leading-relaxed text-center sm:text-left"
-            style={{ color: "rgba(255,255,255,0.80)" }}
+      {/* ── Conteúdo ──────────────────────────────────────────────────────── */}
+      <motion.div data-reveal
+        style={{ y: reduce ? 0 : contentDrift, opacity: reduce ? 1 : contentFade }}
+        className="relative z-10 min-h-[100svh] flex items-start sm:items-center px-6 sm:px-10 lg:px-16 xl:px-24 pt-28 pb-[min(26rem,62vh)] lg:pb-[min(17rem,30vh)] max-md:items-start max-md:pt-[clamp(9rem,23svh,12rem)] max-md:pb-[clamp(17rem,38svh,21rem)]"
+      >
+        <div className="w-full max-w-[46rem]">
+          <motion.p data-reveal
+            {...step(0.05, 12)}
+            className="text-[0.68rem] sm:text-xs font-semibold uppercase tracking-[0.32em]"
+            style={{ color: "rgba(255,255,255,0.9)" }}
           >
-            Tapetes higiênicos{" "}
-            <strong style={{ color: "#5CCDA7" }}>superabsorventes</strong>,
-            com mais proteção contra vazamentos, patas secas e casa mais limpa todos os dias.
-          </p>
+            Soluções que cuidam do seu mundo
+          </motion.p>
 
-          {/* CTA Button */}
-          <div className="flex items-center justify-center sm:justify-start">
+          <motion.span data-reveal
+            aria-hidden="true"
+            initial={reduce ? false : { scaleX: 0 }}
+            animate={{ scaleX: 1 }}
+            transition={{ duration: 0.7, delay: 0.2, ease: EASE }}
+            className="block h-px w-14 mt-5 mb-8 origin-left"
+            style={{ background: "linear-gradient(90deg,#5CCDA7,rgba(92,205,167,0))" }}
+          />
+
+          <h1 className="font-extrabold leading-[1.05] tracking-[-0.025em] text-[clamp(2.1rem,4.9vw,4.15rem)]">
+            <motion.span data-reveal {...step(0.16)} className="block text-white">
+              Mais <span className="text-[#5CCDA7]">absorção</span>
+            </motion.span>
+            <motion.span data-reveal {...step(0.3)} className="block text-white">
+              Menos <span className="text-[#5CCDA7]">preocupação</span>
+            </motion.span>
+          </h1>
+
+          <motion.p data-reveal
+            {...step(0.44, 16)}
+            className="mt-7 text-[0.98rem] sm:text-lg leading-relaxed max-w-[36ch]"
+            style={{ color: "rgba(255,255,255,0.74)" }}
+          >
+            Tapetes higiênicos desenvolvidos para tornar o cuidado diário
+            mais simples, seguro e confortável.
+          </motion.p>
+
+          <motion.div data-reveal {...step(0.56, 16)} className="mt-10 max-md:mt-12">
             <a
               href="#produtos"
-              className="hero-cta shimmer-btn text-white font-black text-lg px-10 py-4 rounded-2xl flex items-center gap-3"
-              style={{ boxShadow: "0 20px 50px rgba(92,205,167,0.35)" }}
+              className="group inline-flex items-center gap-3 pl-8 pr-7 py-4 text-[0.95rem] font-semibold transition-[filter,transform] duration-300 hover:brightness-110 hover:-translate-y-px max-md:w-auto max-md:justify-center max-md:gap-2 max-md:px-5 max-md:py-3 max-md:min-h-11 max-md:text-sm"
+              style={{
+                background: CTA_GRADIENT,
+                color: "#002236",
+                borderRadius: "var(--kelka-radius-pill)",
+                boxShadow: "0 16px 40px -22px rgba(0,162,214,0.85)",
+              }}
             >
-              Ver Produtos
-              <span className="animate-bounce-x">→</span>
+              Conheça nossas soluções
+              <ArrowRight
+                size={18}
+                weight="bold"
+                className="transition-transform duration-300 group-hover:translate-x-1"
+                aria-hidden="true"
+              />
             </a>
+          </motion.div>
+        </div>
+      </motion.div>
+
+      {/* ── Faixa de transição ────────────────────────────────────────────
+          Curva recortando a base do hero, seguida de uma faixa editorial.
+          Sem ícones, sem colunas iguais, sem cartões: só tipografia e um
+          separador fino. Ela também cobre o pé do K, que é o que faz a peça
+          parecer encaixada na composição em vez de colada por cima. */}
+      <div className="absolute inset-x-0 bottom-0 z-20 pointer-events-none">
+        {/* A forma clara é UM svg esticado sobre a faixa inteira, não uma tira
+            empilhada acima dela. É o que permite a rampa da direita descer até
+            perto do rodapé: empilhada, ela morria no topo do bloco branco.
+            O traçado tem três trechos declarados: joelho curto e fechado na
+            ponta esquerda (resolve em ~100 das 1440 unidades), reta longa no
+            miolo e rampa na ponta direita. */}
+        {/* A faixa fica branca nos dois modos, como a seção de Benefícios logo
+            abaixo: no escuro, surface-2 viraria #003c57 e a curva sumiria
+            contra o hero. Redefinir os tokens aqui faz fundo, texto e traço
+            trocarem juntos — mexer só no fill deixaria texto branco no branco. */}
+        <div
+          className="relative"
+          style={{
+            ["--kelka-surface-2" as string]: "#ffffff",
+            ["--kelka-text" as string]: "#002236",
+            ["--kelka-text-muted" as string]: "#346378",
+            ["--kelka-border" as string]: "rgba(0,60,87,0.14)",
+          }}
+        >
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 1440 220"
+            preserveAspectRatio="none"
+            className="absolute inset-0 w-full h-full"
+          >
+            <path
+              d="M0 220 L0 30 C 14 72, 46 99, 110 99 L 1330 99 C 1392 99, 1432 148, 1440 196 L 1440 220 Z"
+              fill="var(--kelka-surface-2)"
+            />
+          </svg>
+
+          <div className="relative max-w-7xl mx-auto px-6 pr-[4.75rem] sm:px-10 sm:pr-10 lg:px-14 lg:pr-28 2xl:pr-14 pt-44 pb-6 lg:pt-44 lg:pb-12">
+            {/* Quatro colunas com ícone fino e título curto, como no mockup.
+                Separadores verticais de 1px, sem cartão e sem marcador. */}
+            <ul className="grid grid-cols-2 lg:grid-cols-4 gap-y-6 gap-x-4 m-0 p-0 list-none">
+              {[
+                { Icone: Drop, l1: "Superabsorção", l2: "que seca de verdade" },
+                { Icone: ShieldCheck, l1: "Mais proteção", l2: "contra vazamentos" },
+                { Icone: PawPrint, l1: "Conforto para ele,", l2: "tranquilidade para você" },
+                { Icone: Leaf, l1: "Tecnologia e cuidado", l2: "em cada detalhe" },
+              ].map((item, i) => (
+                <li
+                  key={item.l1}
+                  className={[
+                    "flex items-center gap-4 sm:gap-5",
+                    i > 0 ? "lg:border-l lg:border-line lg:pl-8" : "",
+                    i === 1 ? "border-l border-line pl-4 lg:pl-8" : "",
+                    i === 3 ? "border-l border-line pl-4 lg:pl-8" : "",
+                  ].join(" ")}
+                >
+                  <item.Icone
+                    size={36}
+                    weight="light"
+                    className="text-sky shrink-0"
+                    aria-hidden="true"
+                  />
+                  <p className="text-[0.85rem] sm:text-[0.95rem] leading-snug text-ink">
+                    <span className="font-semibold">{item.l1}</span>
+                    <br />
+                    <span className="text-ink-muted">{item.l2}</span>
+                  </p>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </div>
-
     </section>
   );
 }
