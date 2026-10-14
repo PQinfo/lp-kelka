@@ -49,3 +49,8 @@ archive/
 # Exportacoes originais das laminas da segunda secao. O pipeline le apenas os
 # lamina-*.webp ao lado; estes PNG sao a arte bruta, guardada so na maquina.
 src/assets/segundasecao/ChatGPT Image*.png
+
+# Material de origem das embalagens, recebido por fora. O build usa apenas os
+# WebP ja extraidos em public/produtos/; estes masters ficam so na maquina.
+src/assets/materiais/TAPETES HIGIENICOS/
+src/assets/materiais/*.docx

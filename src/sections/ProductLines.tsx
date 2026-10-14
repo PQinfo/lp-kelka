@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } f
 import { CaretRight, PawPrint } from '@phosphor-icons/react';
 import { m as motion } from "framer-motion";
 import { useReducedMotion } from "../hooks/useReducedMotion";
-import { formatSize, getVariant, lines, parseProductSelection, variants, type LineId, type PackageUnits, type ProductLine } from '../data/catalog';
+import { defaultSizeFor, formatSize, formatSizeId, getVariant, lines, parseProductSelection, sizesFor, variants, type LineId, type PackageUnits, type ProductLine, type SizeId } from '../data/catalog';
 import { images } from '../generated/images';
 import { imageProps } from '../lib/image';
 import { useMediaQuery } from '../hooks/useMediaQuery';
@@ -16,6 +16,7 @@ function lineColors(line: ProductLine): CSSProperties {
 }
 export default function ProductLines() {
   const [selectedLine, setSelectedLine] = useState<LineId>('pipizao');
+  const [selectedSize, setSelectedSize] = useState<SizeId>(defaultSizeFor('pipizao'));
   const [selectedUnits, setSelectedUnits] = useState<PackageUnits>(7);
   const tabs = useRef<(HTMLButtonElement | null)[]>([]);
   const interacted = useRef(false);
@@ -24,14 +25,19 @@ export default function ProductLines() {
   const search = useLocationSearch();
   useEffect(() => {
     const selection = parseProductSelection(search);
-    if (selection) { setSelectedLine(selection.lineId); setSelectedUnits(selection.units); }
+    if (selection) { setSelectedLine(selection.lineId); setSelectedSize(selection.sizeId); setSelectedUnits(selection.units); }
   }, [search]);
   const line = lines.find(item => item.id === selectedLine) ?? lines[0];
-  const product = getVariant(line.id, selectedUnits);
+  // Cada linha oferece os seus proprios tamanhos: ao trocar de linha, um tamanho
+  // que nao existe nela cai no primeiro disponivel em vez de quebrar a busca.
+  const sizeFor = (lineId: LineId) => (sizesFor(lineId).includes(selectedSize) ? selectedSize : defaultSizeFor(lineId));
+  const product = getVariant(line.id, sizeFor(line.id), selectedUnits);
   function selectLine(index: number, focusTab = false) {
     interacted.current = true;
-    setSelectedLine(lines[index].id);
-    track('product_select', {line: lines[index].id, units: selectedUnits});
+    const nextLine = lines[index].id;
+    setSelectedLine(nextLine);
+    setSelectedSize(sizeFor(nextLine));
+    track('product_select', {line: nextLine, units: selectedUnits});
     if (focusTab) tabs.current[index]?.focus({preventScroll:true});
   }
   function handleTabKey(event: KeyboardEvent<HTMLButtonElement>, index: number) {
@@ -60,15 +66,27 @@ export default function ProductLines() {
             ))}
           </div>
           {lines.map(item => {
-            const selected = getVariant(item.id,selectedUnits);
+            const itemSize = sizeFor(item.id);
+            const selected = getVariant(item.id,itemSize,selectedUnits);
             return <div key={item.id} className={styles.details} id={`product-${item.id}`} role="tabpanel" aria-labelledby={`tab-${item.id}`} tabIndex={0} hidden={item.id!==line.id}>
               <h3 className={styles.productName}>{item.name}</h3>
               <p className={styles.description}>{item.description}</p>
-              <p className={styles.size}><span>Tamanho</span><strong>{formatSize(selected)}</strong></p>
+              <fieldset className={styles.packages}>
+                <legend>Tamanho</legend>
+                <div className={styles.packageOptions}>
+                  {sizesFor(item.id).map(size=>(
+                    <label key={size} className={styles.packageOption}>
+                      <input type="radio" name={`size-${item.id}`} value={size} checked={size===itemSize}
+                        onChange={()=>{interacted.current=true;setSelectedSize(size);track('size_select',{line:item.id,size});}} />
+                      <span>{formatSizeId(size)}</span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
               <fieldset className={styles.packages}>
                 <legend>Opções de embalagem</legend>
                 <div className={styles.packageOptions}>
-                  {variants.filter(variant=>variant.lineId===item.id).map(variant=>(
+                  {variants.filter(variant=>variant.lineId===item.id&&variant.sizeId===itemSize).map(variant=>(
                     <label key={variant.id} className={styles.packageOption}>
                       <input type="radio" name={`package-${item.id}`} value={variant.units} checked={variant.units===selectedUnits}
                         onChange={()=>{interacted.current=true;setSelectedUnits(variant.units);track('package_select',{line:item.id,units:variant.units});}} />
@@ -78,7 +96,7 @@ export default function ProductLines() {
                   ))}
                 </div>
               </fieldset>
-              <noscript><ul>{variants.filter(variant => variant.lineId === item.id).map(variant => <li key={variant.id}><a href={whatsappUrl(`Olá! Gostaria de conhecer o ${item.name}, tamanho ${formatSize(variant)}, com ${variant.units} unidades.`)}>{variant.units} unidades — {formatSize(variant)}</a></li>)}</ul></noscript>
+              <noscript><ul>{variants.filter(variant => variant.lineId === item.id).map(variant => <li key={variant.id}><a href={whatsappUrl(`Olá! Gostaria de conhecer o ${item.name}, tamanho ${formatSize(variant)}, com ${variant.units} unidades.`)}>{formatSize(variant)} — {variant.units} unidades</a></li>)}</ul></noscript>
               <a className={styles.cta} href={whatsappUrl(`Olá! Gostaria de conhecer o ${item.name}, tamanho ${formatSize(selected)}, com ${selected.units} unidades.`)}
                 target="_blank" rel="noopener noreferrer" onClick={()=>track('contact_click',{source:'product',line:item.id,units:selected.units})}>
                 <PawPrint size={28} weight="fill" aria-hidden="true" /><span>Conhecer o {item.name}</span><CaretRight size={20} aria-hidden="true" />

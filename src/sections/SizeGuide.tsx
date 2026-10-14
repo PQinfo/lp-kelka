@@ -53,7 +53,7 @@ export default function SizeGuide() {
                 </button>
               ))}
             </div>
-            <a className={styles.productLink} href={productHref(selectedProduct.lineId, selectedProduct.units)} onClick={navigateWithinPage}>Ver produto neste tamanho <CaretRight aria-hidden="true" size={16} /></a>
+            <a className={styles.productLink} href={productHref(selectedProduct.lineId, selectedProduct.units, selectedProduct.sizeId)} onClick={navigateWithinPage}>Ver produto neste tamanho <CaretRight aria-hidden="true" size={16} /></a>
           </div>
 
           <motion.div

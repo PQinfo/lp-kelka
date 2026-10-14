@@ -14,7 +14,9 @@ const sources=[
  ['simulator','src/assets/bg-simulador.png',[800,1200,1672]],
  ['logo','public/logo-horizontal.png',[192,384]],
  ...[1,2,3,4].map((n)=>[`layer${n}`,`src/assets/segundasecao/lamina-${n}-${['superficie','nucleo','barreira','base'][n-1]}.webp`,[480,640,960,1448]]),
- ...['pipizao','fofuxao','xixicao'].flatMap(line=>[7,30].map(units=>[`${line}${units}`,`public/produtos/${line}-${units}un.webp`,[480,900,1500]])),
+ // Cada linha tem dois tamanhos, e cada tamanho tem as duas embalagens.
+ ...[['pipizao','80x60'],['pipizao','60x60'],['fofuxao','60x55'],['fofuxao','70x60'],['xixicao','80x60'],['xixicao','60x60']]
+   .flatMap(([line,size])=>[7,30].map(units=>[`${line}_${size}_${units}`,`public/produtos/${line}-${size}-${units}un.webp`,[480,900,1500]])),
 ];
 const imports=[],entries=[],metadata=[];
 for(const [id,source,requested] of sources){

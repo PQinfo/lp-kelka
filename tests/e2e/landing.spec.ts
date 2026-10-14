@@ -24,16 +24,25 @@ test('initial content, hydration, anchors and responsive layout', async ({page})
 
 test('all products/packages, footer links and medium size select the correct variant',async({page})=>{
   await page.goto('./#produtos');
-  for (const name of ['Pipizão','Fofuxão','Xixicão']) {
+  // Cada linha tem dois tamanhos, e cada tamanho as duas embalagens: as quatro
+  // combinacoes precisam chegar inteiras na mensagem do WhatsApp.
+  const porLinha={'Pipizão':['80 × 60 cm','60 × 60 cm'],'Fofuxão':['60 × 55 cm','70 × 60 cm'],'Xixicão':['80 × 60 cm','60 × 60 cm']};
+  for (const [name,sizes] of Object.entries(porLinha)) {
     await page.getByRole('tab',{name}).click();
     const panel=page.getByRole('tabpanel');
-    for (const units of [30,7]) {
-      await panel.getByLabel(new RegExp(`${units} unidades`)).check();
-      const link=panel.getByRole('link',{name:`Conhecer o ${name}`});
-      const message=new URL((await link.getAttribute('href'))!).searchParams.get('text');
-      expect(message).toContain(`${units} unidades`);
-      expect(message).toContain(name);
-      if(name==='Fofuxão')expect(message).toContain(units===30?'70 × 60 cm':'60 × 55 cm');
+    const sizeGroup=panel.locator('fieldset').first();
+    const packageGroup=panel.locator('fieldset').nth(1);
+    await expect(sizeGroup.getByRole('radio')).toHaveCount(2);
+    for (const size of sizes) {
+      await sizeGroup.getByRole('radio',{name:size}).check();
+      for (const units of [30,7]) {
+        await packageGroup.getByLabel(new RegExp(`${units} unidades`)).check();
+        const link=panel.getByRole('link',{name:`Conhecer o ${name}`});
+        const message=new URL((await link.getAttribute('href'))!).searchParams.get('text');
+        expect(message).toContain(`${units} unidades`);
+        expect(message).toContain(name);
+        expect(message).toContain(size);
+      }
     }
   }
   await page.locator('footer').getByRole('link',{name:'Xixicão',exact:true}).click();
@@ -41,7 +50,8 @@ test('all products/packages, footer links and medium size select the correct var
   await page.getByRole('button',{name:/^Médio porte/}).click();
   await page.getByRole('link',{name:'Ver produto neste tamanho'}).click();
   await expect(page.getByRole('tab',{name:'Fofuxão'})).toHaveAttribute('aria-selected','true');
-  await expect(page.getByRole('tabpanel').getByLabel(/30 unidades/)).toBeChecked();
+  await expect(page.getByRole('tabpanel').locator('fieldset').nth(1).getByLabel(/30 unidades/)).toBeChecked();
+  await expect(page.getByRole('tabpanel').locator('fieldset').first().getByRole('radio',{name:'70 × 60 cm'})).toBeChecked();
   await page.locator('footer').getByRole('link',{name:'Terceirização de tapetes'}).click();
   await expect(page.getByRole('button',{name:/Quero terceirizar/})).toHaveAttribute('aria-pressed','true');
 });
